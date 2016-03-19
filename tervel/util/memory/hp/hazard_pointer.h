@@ -82,9 +82,9 @@ class HazardPointer {
         void *expected, HazardPointer * const hazard_pointer =
         tervel::tl_thread_info->get_hazard_pointer());
 
-  static bool watch(SlotID slot, Element* descr, HazardPointer * const hazard_pointer =
+  static void watch(SlotID slot, Element* descr, HazardPointer * const hazard_pointer =
         tervel::tl_thread_info->get_hazard_pointer()) {
-      return hazard_pointer->watch(slot, descr);
+      hazard_pointer->watch(slot, reinterpret_cast<void*>(descr));
   }
 
   /**
