@@ -63,7 +63,7 @@ class ShiftOp: public tervel::util::OpRecord {
   bool on_is_watched() {
     ShiftHelper<T> *temp = helpers_.load();
     assert(temp != nullptr);
-    if (temp == k_fail_const) {
+    if (temp == (ShiftHelper<T> *)k_fail_const) {
       return false;
     }
     while (temp != nullptr) {
@@ -119,9 +119,7 @@ class ShiftOp: public tervel::util::OpRecord {
   std::atomic<ShiftHelper<T> *> helpers_{nullptr};
   std::atomic<bool> is_done_{false};
 
-  static constexpr ShiftHelper<T> * k_fail_const {
-    reinterpret_cast<ShiftHelper<T> *>(0x1L)
-  };
+  static constexpr uintptr_t k_fail_const { 0x1UL };
 
 };  // class ShiftOp
 
@@ -143,7 +141,7 @@ template<typename T>
 void ShiftOp<T>::fail() {
   ShiftHelper<T> *cur = helpers_.load();
   if (cur == nullptr) {
-    if (helpers_.compare_exchange_strong(cur, k_fail_const) || cur == k_fail_const) {
+    if (helpers_.compare_exchange_strong(cur, (ShiftHelper<T> *)k_fail_const) || cur == (ShiftHelper<T> *)k_fail_const) {
       set_done();
     }
   }
@@ -151,7 +149,7 @@ void ShiftOp<T>::fail() {
 
 template<typename T>
 bool ShiftOp<T>::isFailed() {
-  return helpers_.load() == k_fail_const;
+  return helpers_.load() == (ShiftHelper<T> *)k_fail_const;
 }
 
 
@@ -181,7 +179,7 @@ void ShiftOp<T>::place_first_idx(bool announced) {
 
     T expected = spot->load();
     helper->set_value(expected);
-    if (expected == Vector<T>::c_not_value_) {
+    if (expected == (T)Vector<T>::c_not_value_) {
       this->fail();
       break;
     } else if (vec_->internal_array.is_descriptor(expected, spot)) {
@@ -208,14 +206,14 @@ template<typename T>
 void ShiftOp<T>::place_rest(bool announced) {
 
   ShiftHelper<T> *last_helper = helpers_.load();
-  assert(last_helper != k_fail_const);
+  assert(last_helper != (ShiftHelper<T> *)k_fail_const);
 
   ShiftHelper<T> *helper = nullptr;
   T helper_marked;
   for (size_t i = idx_ + 1; !is_done() ; i++) {
     assert(last_helper != nullptr);
 
-    if (last_helper->end(Vector<T>::c_not_value_)) {
+    if (last_helper->end((T)Vector<T>::c_not_value_)) {
       set_done();
       break;
     }
@@ -245,7 +243,7 @@ void ShiftOp<T>::place_rest(bool announced) {
 
       T expected = spot->load();
       helper->set_value(expected);
-      if (expected != Vector<T>::c_not_value_ &&
+      if (expected != (T)Vector<T>::c_not_value_ &&
           vec_->internal_array.shift_is_descriptor(expected, spot, this)) {
         if (tervel::util::RecursiveAction::recursive_return()) {
           util::memory::rc::safefree_descriptor(helper);

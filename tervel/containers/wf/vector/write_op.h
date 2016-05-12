@@ -74,7 +74,7 @@ class WriteOp: public tervel::util::OpRecord {
       while (helper_.load() == nullptr) {
         T cvalue = spot->load();
 
-        if (cvalue == Vector<T>::c_not_value_) {
+        if (cvalue == (T)Vector<T>::c_not_value_) {
           break;  // will set to failed
         } else if (vec_->internal_array.is_descriptor(cvalue, spot)) {
           continue;

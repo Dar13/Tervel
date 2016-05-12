@@ -46,7 +46,7 @@ class PopWRAOpHelper;
 template<typename T>
 class PopWRAOp: public tervel::util::OpRecord {
  public:
-  static constexpr PopWRAOpHelper<T> * is_empty_const {reinterpret_cast<PopWRAOpHelper<T> *>(0x1L)};
+  static constexpr uintptr_t is_empty_const {0x1UL};
 
   PopWRAOp(Vector<T> *vec)
     : vec_(vec) {}
@@ -54,7 +54,7 @@ class PopWRAOp: public tervel::util::OpRecord {
   ~PopWRAOp() {
     PopWRAOpHelper<T> * temp = helper_.load();
     assert(temp != nullptr);
-    if (temp != is_empty_const) {
+    if (temp != (PopWRAOpHelper<T> *)is_empty_const) {
       util::memory::rc::free_descriptor(temp, true);
     }
 
@@ -63,7 +63,7 @@ class PopWRAOp: public tervel::util::OpRecord {
   void set_failed() {
     PopWRAOpHelper<T> *temp = helper_.load();
     if (temp == nullptr) {
-      helper_.compare_exchange_strong(temp, is_empty_const);
+      helper_.compare_exchange_strong(temp, (PopWRAOpHelper<T> *)is_empty_const);
     }
   }
 
@@ -82,7 +82,7 @@ class PopWRAOp: public tervel::util::OpRecord {
     tervel::tl_control_word = &helper_;
 
     while (helper_.load() == nullptr) {
-      if (current_prev == Vector<T>::c_not_value_) {
+      if (current_prev == (T)Vector<T>::c_not_value_) {
 	placed_pos--;
 	if (placed_pos <= 0) {
 	  this->set_failed();
@@ -112,7 +112,7 @@ class PopWRAOp: public tervel::util::OpRecord {
   bool result(T &val) {
     PopWRAOpHelper<T> *temp = helper_.load();
     assert(temp != nullptr);
-    if (temp == is_empty_const) {
+    if (temp == (PopWRAOpHelper<T> *)is_empty_const) {
       return false;
     } else {
       return temp->result(val);
@@ -122,7 +122,7 @@ class PopWRAOp: public tervel::util::OpRecord {
   bool result() {
     PopWRAOpHelper<T> *temp = helper_.load();
     assert(temp != nullptr);
-    if (temp == is_empty_const) {
+    if (temp == (PopWRAOpHelper<T> *)is_empty_const) {
       return false;
     } else {
       return temp->result();
@@ -133,7 +133,7 @@ class PopWRAOp: public tervel::util::OpRecord {
  private:
   friend class PopWRAOpHelper<T>;
   Vector<T> *vec_;
-  std::atomic<T> value_ {Vector<T>::c_not_value_};
+  std::atomic<T> value_ {(T)Vector<T>::c_not_value_};
   std::atomic<T> * prev_spot_ {nullptr};
   std::atomic<PopWRAOpHelper<T> *> helper_ {nullptr};
 };  // class PopOp

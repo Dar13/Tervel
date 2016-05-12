@@ -61,13 +61,13 @@ class Queue<T>::Op : public util::OpRecord {
   ~Op() {
     Helper *h = helper();
     assert(h != nullptr);
-    if (h != fail_val_) {
+    if (h != (Helper *)fail_val_) {
       delete h;
     }
   };
 
   void fail() {
-    associate(fail_val_);
+    associate((Helper *)fail_val_);
   };
 
   bool notDone() {
@@ -77,7 +77,7 @@ class Queue<T>::Op : public util::OpRecord {
   bool on_is_watched() {
     Helper *h = helper_.load();
     assert(h != nullptr);
-    if (h != fail_val_) {
+    if (h != (Helper *)fail_val_) {
       bool res = tervel::util::memory::hp::HazardPointer::is_watched(h);
       return res;
     }
@@ -92,7 +92,7 @@ class Queue<T>::Op : public util::OpRecord {
     return res || helper() == h;
   };
 
-  static constexpr Helper * fail_val_ = reinterpret_cast<Helper *>(0x1L);
+  static constexpr uintptr_t fail_val_ = 0x1UL;
 
   Queue<T> * const queue_ {nullptr};
 };
@@ -106,7 +106,7 @@ class Queue<T>::DequeueOp : public Queue<T>::Op {
 
   bool result(Accessor &access) {
     typename Queue<T>::Op::Helper *helper = Op::helper();
-    if (helper == Op::fail_val_) {
+    if (helper == (typename Queue<T>::Op::Helper *)Op::fail_val_) {
       return false;
     } else {
       access.set_ptr_next(helper->newValue_);

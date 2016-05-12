@@ -53,7 +53,7 @@ T EraseAt<T>::getValue(ShiftHelper<T> * helper) {
 
   helper = helper->next();
   if (helper == nullptr) {
-    return Vector<T>::c_not_value_;
+    return (T)Vector<T>::c_not_value_;
   } else {
     return helper->value();
   }
@@ -70,7 +70,7 @@ void EraseAt<T>::cleanup() {
     T helper_marked = reinterpret_cast<T>(util::memory::rc::mark_first(helper));
     helper = helper->next();
     if (helper == nullptr) {
-      new_value = Vector<T>::c_not_value_;
+      new_value = (T)Vector<T>::c_not_value_;
     } else {
       new_value = helper->value();
     }

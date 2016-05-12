@@ -76,7 +76,7 @@ size_t Vector<T>::push_back_only(T value) {
     while (progAssur.isDelayed() == false) {
       std::atomic<T> *spot = internal_array.get_spot(placed_pos);
       T expected = spot->load();
-      if ( (expected ==  Vector<T>::c_not_value_) &&
+      if ( (expected ==  (T)Vector<T>::c_not_value_) &&
                     spot->compare_exchange_weak(expected, value) ) {
         size(1);
         return placed_pos;
@@ -132,12 +132,12 @@ bool Vector<T>::pop_back_only(T &value) {
       std::atomic<T> *spot = internal_array.get_spot(poped_pos - 1);
       T current = spot->load();
 
-      if (current == Vector<T>::c_not_value_) {
+      if (current == reinterpret_cast<T>(Vector<T>::c_not_value_)) {
         poped_pos--;
         continue;
       } else if (internal_array.is_descriptor(current, spot)) {
         continue;
-      }else if (spot->compare_exchange_weak(current, Vector<T>::c_not_value_)) {
+      }else if (spot->compare_exchange_weak(current, reinterpret_cast<T>(Vector<T>::c_not_value_))) {
         size(-1);
         value = current;
         return true;
@@ -199,7 +199,7 @@ bool Vector<T>::at(size_t idx, T &value) {
     while (progAssur.isDelayed() == false) {
       T cvalue = spot->load(std::memory_order_relaxed);
 
-      if (cvalue == Vector<T>::c_not_value_) {
+      if (cvalue == (T)Vector<T>::c_not_value_) {
         return false;
       }else if (internal_array.is_descriptor(cvalue, spot)) {
         continue;
@@ -242,7 +242,7 @@ bool Vector<T>::cas(size_t idx, T &expected, const T val) {
     while (progAssur.isDelayed() == false) {
       T cvalue = spot->load(std::memory_order_relaxed);
 
-      if (cvalue == c_not_value_) {
+      if (cvalue == (T)c_not_value_) {
         return false;
       } else if (internal_array.is_descriptor(cvalue, spot)) {
         continue;
@@ -269,7 +269,7 @@ bool Vector<T>::cas(size_t idx, T &expected, const T val) {
     return op_succ;
   }  // if idx < capacity()
 
-  expected = Vector<T>::c_not_value_;
+  expected = (T)Vector<T>::c_not_value_;
   return false;
 };
 

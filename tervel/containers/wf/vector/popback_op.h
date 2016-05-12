@@ -50,7 +50,7 @@ class PopOpSubHelper;
 template<typename T>
 class PopOp: public tervel::util::OpRecord {
  public:
-  static constexpr PopOpHelper<T> * is_empty_const {reinterpret_cast<PopOpHelper<T> *>(0x1L)};
+  static constexpr uintptr_t is_empty_const {0x1UL};
 
   PopOp(Vector<T> *vec)
     : vec_(vec) {}
@@ -58,7 +58,7 @@ class PopOp: public tervel::util::OpRecord {
   ~PopOp() {
     PopOpHelper<T> * temp = helper_.load();
     assert(temp != nullptr);
-    if (temp != is_empty_const) {
+    if (temp != (PopOpHelper<T> *)is_empty_const) {
       util::memory::rc::free_descriptor(temp, true);
     }
 
@@ -136,7 +136,7 @@ class PopOp: public tervel::util::OpRecord {
   bool result(T &val) {
     PopOpHelper<T> *temp = helper_.load();
     assert(temp != nullptr);
-    if (temp == is_empty_const) {
+    if (temp == (PopOpHelper<T> *)is_empty_const) {
       return false;
     } else {
       return temp->result(val);
@@ -146,7 +146,7 @@ class PopOp: public tervel::util::OpRecord {
   bool result() {
     PopOpHelper<T> *temp = helper_.load();
     assert(temp != nullptr);
-    if (temp == is_empty_const) {
+    if (temp == (PopOpHelper<T> *)is_empty_const) {
       return false;
     } else {
       return temp->result();
@@ -156,7 +156,7 @@ class PopOp: public tervel::util::OpRecord {
   void set_failed() {
     PopOpHelper<T> *temp = helper_.load();
     if (temp == nullptr) {
-      helper_.compare_exchange_strong(temp, is_empty_const);
+      helper_.compare_exchange_strong(temp, (PopOpHelper<T> *)is_empty_const);
     }
   }
 
@@ -228,7 +228,7 @@ class PopOp: public tervel::util::OpRecord {
     if (temp == nullptr) {
       assert(false);  // THis state should not be reached
       return false;
-    } else if (temp == is_empty_const) {
+    } else if (temp == (PopOpHelper<T> *)is_empty_const) {
       return false;
     }
     return tervel::util::memory::rc::is_watched(temp);
@@ -244,7 +244,7 @@ class PopOp: public tervel::util::OpRecord {
 template<typename T>
 class PopOpHelper: public tervel::util::Descriptor {
  public:
-  static constexpr PopOpSubHelper<T> * fail_const {reinterpret_cast<PopOpSubHelper<T> *>(0x1L)};
+  static constexpr uintptr_t fail_const {0x1UL};
 
 
   PopOpHelper(Vector<T> * vec, PopOp<T> *op)
@@ -259,7 +259,7 @@ class PopOpHelper: public tervel::util::Descriptor {
     PopOpSubHelper<T> * temp = child_.load();
     if (temp == nullptr) {
       return;
-    } else if (temp == fail_const) {
+    } else if (temp == (PopOpSubHelper<T> *)fail_const) {
       return;
     } else {
       util::memory::rc::free_descriptor(temp, true);
@@ -278,7 +278,7 @@ class PopOpHelper: public tervel::util::Descriptor {
   bool result(T &val) {
     PopOpSubHelper<T> *temp = child_.load();
     assert(temp != nullptr);
-    if (temp == fail_const) {
+    if (temp == (PopOpSubHelper<T> *)fail_const) {
       return false;
     } else {
       temp->val(val);
@@ -289,7 +289,7 @@ class PopOpHelper: public tervel::util::Descriptor {
   bool result() {
     PopOpSubHelper<T> *temp = child_.load();
     assert(temp != nullptr);
-    if (temp == fail_const) {
+    if (temp == (PopOpSubHelper<T> *)fail_const) {
       return false;
     } else {
       return true;
@@ -299,7 +299,7 @@ class PopOpHelper: public tervel::util::Descriptor {
   void fail() {
     PopOpSubHelper<T> *temp = child_.load();
     if (temp == nullptr) {
-      child_.compare_exchange_strong(temp, fail_const);
+      child_.compare_exchange_strong(temp, (PopOpSubHelper<T> *)fail_const);
     }
   }
 
@@ -412,7 +412,7 @@ class PopOpHelper: public tervel::util::Descriptor {
   bool on_is_watched() {
     PopOpSubHelper<T> *temp = child_.load();
     assert(temp != nullptr);
-    if (temp == fail_const) {
+    if (temp == (PopOpSubHelper<T> *)fail_const) {
       return false;
     } else {
       return tervel::util::memory::rc::is_watched(temp);

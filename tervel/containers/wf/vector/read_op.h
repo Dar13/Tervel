@@ -48,12 +48,12 @@ class ReadOp: public tervel::util::OpRecord {
     if (idx_ < vec_->capacity()) {
       std::atomic<T> *spot = vec_->internal_array.get_spot(idx_, false);
 
-      while (value_.load() == Vector<T>::c_not_value_) {
+      while (value_.load() == (T)Vector<T>::c_not_value_) {
         T cvalue = spot->load();
 
 
-        if (cvalue == Vector<T>::c_not_value_) {
-          value_.store(c_fail_value_);
+        if (cvalue == (T)Vector<T>::c_not_value_) {
+          value_.store((T)c_fail_value_);
           return;
         } else if (vec_->internal_array.is_descriptor(cvalue, spot)) {
           continue;
@@ -65,12 +65,12 @@ class ReadOp: public tervel::util::OpRecord {
       }  // while value_ is c_not_value
     }  // if idx < capacity()
 
-    value_.store(c_fail_value_);
+    value_.store((T)c_fail_value_);
   };
 
   bool result(T &expected) {
     T temp = value_.load();
-    if (temp == c_fail_value_) {
+    if (temp == (T)c_fail_value_) {
       return false;
     } else {
       expected = temp;
@@ -82,8 +82,8 @@ class ReadOp: public tervel::util::OpRecord {
  private:
   Vector<T> *vec_;
   size_t idx_;
-  std::atomic<T> value_ {Vector<T>::c_not_value_};
-  static constexpr T c_fail_value_ {reinterpret_cast<T>(~0x1L)};
+  std::atomic<T> value_ {(T)Vector<T>::c_not_value_};
+  static constexpr uintptr_t c_fail_value_ {0x1UL};
 };  // class ReadOp
 }  // namespace vector
 }  // namespace wf

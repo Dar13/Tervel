@@ -46,7 +46,7 @@ class Vector {
  public:
   explicit Vector(const size_t capacity = 64)
     : current_size_(0)
-    , internal_array(capacity, c_not_value_) {}
+    , internal_array(capacity, (T)c_not_value_) {}
 
   bool at(size_t idx, T &value);
   bool cas(size_t idx, T &expValue, const T newValue);
@@ -74,7 +74,9 @@ class Vector {
     return internal_array.capacity();
   };
 
-  static constexpr T c_not_value_ {reinterpret_cast<T>(0x1L)};
+  // Reinterpret_cast not allowed inside a constexpr definition. Just have to cast
+  // to 'T' whenever needed instead.
+  static constexpr uintptr_t c_not_value_ {0x1UL};
 
   int64_t size(int64_t val) {
     int64_t temp = current_size_.fetch_add(val);

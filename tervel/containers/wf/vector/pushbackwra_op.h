@@ -49,7 +49,7 @@ class PushWRAOp: public tervel::util::OpRecord {
 public:
   PushWRAOp(Vector<T> *vec, T val)
    : vec_(vec)
-   , new_val_(val) {}
+   , new_val_((T)val) {}
 
   ~PushWRAOp() {
     PushWRAOpHelper<T> * temp = helper_.load();
@@ -69,7 +69,7 @@ public:
     T current = spot->load();
 
     while (helper_.load() == nullptr) {
-      if (current == Vector<T>::c_not_value_) {
+      if (current == (T)Vector<T>::c_not_value_) {
 
 	helper->set_idx(placed_pos);
 	if (!spot->compare_exchange_strong(current, help_t)) {

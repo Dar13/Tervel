@@ -49,7 +49,7 @@ bool VectorArray<T>::shift_is_descriptor(T &expected, std::atomic<T> *spot, void
 
   tervel::util::RecursiveAction recurse;
   if (tervel::util::RecursiveAction::recursive_return()) {
-    expected = Vector<T>::c_not_value_;  // result not used
+    expected = (T)Vector<T>::c_not_value_;  // result not used
     return true;
   }
 
